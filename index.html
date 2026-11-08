@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>香港地區物業概覽 | HK District Property Overview</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <style>
     :root {
       --bg: #0f1419;
@@ -32,79 +34,35 @@
       gap: 12px;
     }
     .menu-btn {
-      background: none;
-      border: none;
-      color: var(--text);
-      font-size: 22px;
-      cursor: pointer;
-      padding: 4px 8px;
+      background: none; border: none; color: var(--text);
+      font-size: 22px; cursor: pointer; padding: 4px 8px;
     }
     .header h1 { font-size: 15px; font-weight: 600; }
     .header .subtitle { font-size: 11px; color: var(--text-muted); }
-    .layout {
-      display: flex;
-      height: calc(100vh - 52px);
-      position: relative;
-    }
+    .layout { display: flex; height: calc(100vh - 52px); position: relative; }
     .sidebar {
-      width: 260px;
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      overflow-y: auto;
-      padding: 12px;
-      transition: transform 0.25s ease;
-      z-index: 1001;
+      width: 260px; background: var(--panel); border-right: 1px solid var(--border);
+      overflow-y: auto; padding: 12px; transition: transform 0.25s ease; z-index: 1001;
     }
     .sidebar.hidden { transform: translateX(-100%); position: absolute; height: 100%; }
-    .sidebar h2 {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-    }
+    .sidebar h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 10px; }
     .district-btn {
-      display: block;
-      width: 100%;
-      text-align: left;
-      padding: 10px 12px;
-      margin-bottom: 3px;
-      background: transparent;
-      border: none;
-      border-radius: 6px;
-      color: var(--text);
-      cursor: pointer;
-      font-size: 14px;
+      display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 3px;
+      background: transparent; border: none; border-radius: 6px; color: var(--text);
+      cursor: pointer; font-size: 14px;
     }
     .district-btn:hover, .district-btn.active { background: var(--accent); }
-    .region-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin: 14px 0 6px;
-      text-transform: uppercase;
-    }
+    .region-label { font-size: 11px; color: var(--text-muted); margin: 14px 0 6px; text-transform: uppercase; }
     .map-container { flex: 1; position: relative; }
     #map { width: 100%; height: 100%; }
     .legend {
-      position: absolute;
-      bottom: 16px;
-      left: 12px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      z-index: 1000;
-      font-size: 11px;
+      position: absolute; bottom: 16px; left: 12px; background: var(--panel);
+      border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; z-index: 1000; font-size: 11px;
     }
     .legend-item { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
     .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .stats {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-      font-size: 12px;
-      color: var(--text-muted);
-    }
+    .stats { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+    .loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 2000; background: var(--panel); padding: 20px; border-radius: 8px; }
     .leaflet-popup-content { font-size: 13px; line-height: 1.4; }
     @media (max-width: 768px) {
       .sidebar { position: absolute; height: 100%; }
@@ -118,7 +76,7 @@
     <button class="menu-btn" id="menuBtn">☰</button>
     <div>
       <h1>香港地區物業概覽</h1>
-      <div class="subtitle">District Property Overview · 樓齡 · 設施 · 交通</div>
+      <div class="subtitle">District Property Overview · 全港私樓資料（屋宇署）</div>
     </div>
   </div>
   <div class="layout">
@@ -145,25 +103,25 @@
       <button class="district-btn" data-district="葵青區">葵青區</button>
       <button class="district-btn" data-district="西貢區">西貢區</button>
       <button class="district-btn" data-district="離島區">離島區</button>
-      <div class="stats" id="districtStats">選擇地區以查看統計</div>
+      <div class="stats" id="districtStats">載入數據中…</div>
     </div>
     <div class="map-container">
       <div id="map"></div>
+      <div class="loading" id="loading">載入全港樓宇資料中…</div>
       <div class="legend">
         <div style="font-weight:600; margin-bottom:4px;">樓齡</div>
         <div class="legend-item"><div class="dot" style="background:#10b981"></div> 20年以下</div>
         <div class="legend-item"><div class="dot" style="background:#f59e0b"></div> 20–40年</div>
         <div class="legend-item"><div class="dot" style="background:#ef4444"></div> 40年以上</div>
-        <div style="margin-top:8px; font-weight:600;">設施</div>
-        <div class="legend-item"><div class="dot" style="background:#60a5fa"></div> 公園 / 街市 / 交通</div>
       </div>
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script>
     const districts = {
-      "沙田區": { center: [22.40, 114.20], zoom: 13 },
+      "沙田區": { center: [22.38, 114.19], zoom: 13 },
       "中西區": { center: [22.28, 114.15], zoom: 15 },
       "灣仔區": { center: [22.28, 114.17], zoom: 15 },
       "東區": { center: [22.28, 114.22], zoom: 14 },
@@ -183,55 +141,14 @@
       "離島區": { center: [22.26, 113.95], zoom: 12 }
     };
 
-    const sampleBuildings = {
-      "沙田區": [
-        { lat: 22.382, lng: 114.195, name: "沙田中心", address: "沙田正街", opYear: 1981, type: "住宅" },
-        { lat: 22.378, lng: 114.188, name: "新城市廣場", address: "沙田正街", opYear: 1985, type: "商業" },
-        { lat: 22.375, lng: 114.192, name: "第一城", address: "銀城街", opYear: 1981, type: "住宅" },
-        { lat: 22.370, lng: 114.185, name: "博康邨", address: "博康邨", opYear: 1982, type: "公屋" },
-        { lat: 22.368, lng: 114.198, name: "漑源邨", address: "漑源邨", opYear: 1976, type: "公屋" },
-        { lat: 22.424, lng: 114.231, name: "新港城", address: "鞍誠街 / 西沙路", opYear: 1995, type: "住宅" },
-        { lat: 22.422, lng: 114.228, name: "馬鞍山中心", address: "鞍駿街1號", opYear: 1994, type: "住宅" },
-        { lat: 22.418, lng: 114.226, name: "恒安邨", address: "恒安邨", opYear: 1987, type: "公屋" },
-        { lat: 22.420, lng: 114.230, name: "耀安邨", address: "耀安邨", opYear: 1988, type: "公屋" },
-        { lat: 22.416, lng: 114.232, name: "利安邨", address: "利安邨", opYear: 1993, type: "公屋" },
-        { lat: 22.425, lng: 114.233, name: "MOSTown", address: "西沙路", opYear: 1990, type: "商業" },
-        { lat: 22.419, lng: 114.235, name: "錦豐苑", address: "西沙路", opYear: 1999, type: "居屋" },
-        { lat: 22.423, lng: 114.226, name: "雅典居", address: "馬鞍山", opYear: 1994, type: "住宅" }
-      ],
-      "中西區": [
-        { lat: 22.282, lng: 114.155, name: "中環中心", address: "皇后大道中", opYear: 1998, type: "商業" },
-        { lat: 22.285, lng: 114.150, name: "蘭桂坊附近樓宇", address: "蘭桂坊", opYear: 1965, type: "住宅" },
-        { lat: 22.278, lng: 114.148, name: "堅尼地城樓宇", address: "堅尼地城", opYear: 1978, type: "住宅" }
-      ],
-      "油尖旺區": [
-        { lat: 22.298, lng: 114.172, name: "尖沙咀樓宇", address: "彌敦道", opYear: 1972, type: "住宅" },
-        { lat: 22.319, lng: 114.169, name: "旺角中心", address: "旺角", opYear: 1985, type: "商業" },
-        { lat: 22.312, lng: 114.165, name: "油麻地樓宇", address: "油麻地", opYear: 1968, type: "住宅" }
-      ],
-      "觀塘區": [
-        { lat: 22.312, lng: 114.225, name: "apm", address: "觀塘", opYear: 2005, type: "商業" },
-        { lat: 22.315, lng: 114.230, name: "牛頭角樓宇", address: "牛頭角", opYear: 1975, type: "住宅" }
-      ]
-    };
-
-    const facilities = [
-      { lat: 22.380, lng: 114.190, name: "沙田公園", type: "公園", district: "沙田區" },
-      { lat: 22.376, lng: 114.186, name: "沙田街市", type: "街市", district: "沙田區" },
-      { lat: 22.382, lng: 114.187, name: "沙田站", type: "MTR", district: "沙田區" },
-      { lat: 22.424, lng: 114.231, name: "馬鞍山站", type: "MTR", district: "沙田區" },
-      { lat: 22.281, lng: 114.158, name: "中環公園", type: "公園", district: "中西區" },
-      { lat: 22.297, lng: 114.172, name: "尖沙咀海濱公園", type: "公園", district: "油尖旺區" }
-    ];
-
-    const map = L.map('map', { zoomControl: true }).setView([22.40, 114.20], 13);
+    const map = L.map('map', { zoomControl: true }).setView([22.38, 114.19], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
       maxZoom: 19
     }).addTo(map);
 
-    let buildingLayer = L.layerGroup().addTo(map);
-    let facilityLayer = L.layerGroup().addTo(map);
+    let allData = {};
+    let clusterGroup = null;
 
     function getAgeColor(year) {
       const age = new Date().getFullYear() - year;
@@ -239,46 +156,49 @@
       if (age < 40) return '#f59e0b';
       return '#ef4444';
     }
-    function getAgeLabel(year) { return new Date().getFullYear() - year; }
+    function getAge(year) { return new Date().getFullYear() - year; }
 
     function loadDistrict(district) {
-      buildingLayer.clearLayers();
-      facilityLayer.clearLayers();
-      const buildings = sampleBuildings[district] || [];
+      if (clusterGroup) map.removeLayer(clusterGroup);
+      clusterGroup = L.markerClusterGroup({
+        chunkedLoading: true,
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false
+      });
+
+      const buildings = allData[district] || [];
       buildings.forEach(b => {
-        const age = getAgeLabel(b.opYear);
         const marker = L.circleMarker([b.lat, b.lng], {
-          radius: 8,
-          fillColor: getAgeColor(b.opYear),
+          radius: 6,
+          fillColor: getAgeColor(b.year),
           color: '#fff',
           weight: 1,
           opacity: 1,
-          fillOpacity: 0.85
-        }).addTo(buildingLayer);
-
+          fillOpacity: 0.8
+        });
         marker.bindPopup(`
-          <b>${b.name}</b><br>
-          地址：${b.address}<br>
-          類型：${b.type}<br>
-          佔用許可年份：${b.opYear}<br>
-          估算樓齡：${age} 年
+          <b>${b.addr || '樓宇'}</b><br>
+          類型：${b.type || '—'}<br>
+          佔用許可年份：${b.year}<br>
+          估算樓齡：${getAge(b.year)} 年
         `);
+        clusterGroup.addLayer(marker);
       });
 
-      facilities.filter(f => f.district === district).forEach(f => {
-        L.circleMarker([f.lat, f.lng], {
-          radius: 6, fillColor: '#60a5fa', color: '#fff', weight: 1, fillOpacity: 0.8
-        }).bindPopup(`<b>${f.name}</b><br>${f.type}`).addTo(facilityLayer);
-      });
+      map.addLayer(clusterGroup);
 
       const d = districts[district];
       if (d) map.setView(d.center, d.zoom);
 
-      const avgAge = buildings.length ? Math.round(buildings.reduce((s, b) => s + getAgeLabel(b.opYear), 0) / buildings.length) : 0;
+      const avgAge = buildings.length
+        ? Math.round(buildings.reduce((s, b) => s + getAge(b.year), 0) / buildings.length)
+        : 0;
       document.getElementById('districtStats').innerHTML = `
         <div><strong>${district}</strong></div>
-        <div>樓宇數量（示範）：${buildings.length}</div>
+        <div>樓宇數量：${buildings.length.toLocaleString()}</div>
         <div>平均樓齡：${avgAge || '—'} 年</div>
+        <div style="margin-top:6px; font-size:11px; color:#8b9bb4;">數據來源：屋宇署樓宇資料及樓齡紀錄</div>
       `;
 
       document.querySelectorAll('.district-btn').forEach(btn => {
@@ -297,8 +217,18 @@
 
     if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden');
 
-    loadDistrict('沙田區');
-    setTimeout(() => map.invalidateSize(), 100);
+    fetch('buildings.json')
+      .then(r => r.json())
+      .then(data => {
+        allData = data;
+        document.getElementById('loading').style.display = 'none';
+        loadDistrict('沙田區');
+        setTimeout(() => map.invalidateSize(), 100);
+      })
+      .catch(err => {
+        document.getElementById('loading').textContent = '載入失敗：' + err.message;
+        console.error(err);
+      });
   </script>
 </body>
 </html>
