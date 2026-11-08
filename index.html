@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>香港地區物業概覽 | HK District Property Overview</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --border: #2d3a4f;
+      --text: #e8eef5;
+      --text-muted: #8b9bb4;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --blue: #60a5fa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+    }
+    .header {
+      height: 56px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 16px;
+    }
+    .header h1 { font-size: 16px; font-weight: 600; }
+    .header .subtitle { font-size: 12px; color: var(--text-muted); }
+    .layout {
+      display: flex;
+      height: calc(100vh - 56px);
+    }
+    .sidebar {
+      width: 280px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 16px;
+    }
+    .sidebar h2 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .district-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 10px 12px;
+      margin-bottom: 4px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .district-btn:hover { background: #243044; }
+    .district-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .region-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin: 16px 0 8px;
+      text-transform: uppercase;
+    }
+    .map-container {
+      flex: 1;
+      position: relative;
+    }
+    #map { width: 100%; height: 100%; }
+    .info-panel {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 320px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+    .info-panel.show { display: block; }
+    .info-panel h3 { font-size: 15px; margin-bottom: 8px; }
+    .info-row { font-size: 13px; margin: 6px 0; color: var(--text-muted); }
+    .info-row strong { color: var(--text); }
+    .legend {
+      position: absolute;
+      bottom: 24px;
+      left: 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      z-index: 1000;
+      font-size: 12px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .stats {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .footer-note {
+      position: absolute;
+      bottom: 8px;
+      right: 16px;
+      font-size: 10px;
+      color: var(--text-muted);
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>香港地區物業概覽</h1>
+      <div class="subtitle">District Property Overview · 樓齡 · 設施 · 交通</div>
+    </div>
+  </div>
+  <div class="layout">
+    <div class="sidebar">
+      <h2>選擇地區</h2>
+      <div class="region-label">香港島</div>
+      <button class="district-btn" data-district="中西區">中西區</button>
+      <button class="district-btn" data-district="灣仔區">灣仔區</button>
+      <button class="district-btn" data-district="東區">東區</button>
+      <button class="district-btn" data-district="南區">南區</button>
+      <div class="region-label">九龍</div>
+      <button class="district-btn" data-district="油尖旺區">油尖旺區</button>
+      <button class="district-btn" data-district="深水埗區">深水埗區</button>
+      <button class="district-btn" data-district="九龍城區">九龍城區</button>
+      <button class="district-btn" data-district="黃大仙區">黃大仙區</button>
+      <button class="district-btn" data-district="觀塘區">觀塘區</button>
+      <div class="region-label">新界</div>
+      <button class="district-btn active" data-district="沙田區">沙田區</button>
+      <button class="district-btn" data-district="大埔區">大埔區</button>
+      <button class="district-btn" data-district="北區">北區</button>
+      <button class="district-btn" data-district="元朗區">元朗區</button>
+      <button class="district-btn" data-district="屯門區">屯門區</button>
+      <button class="district-btn" data-district="荃灣區">荃灣區</button>
+      <button class="district-btn" data-district="葵青區">葵青區</button>
+      <button class="district-btn" data-district="西貢區">西貢區</button>
+      <button class="district-btn" data-district="離島區">離島區</button>
+      <div class="stats" id="districtStats">
+        選擇地區以查看統計
+      </div>
+    </div>
+    <div class="map-container">
+      <div id="map"></div>
+      <div class="info-panel" id="infoPanel">
+        <h3 id="infoTitle">樓宇詳情</h3>
+        <div id="infoContent"></div>
+      </div>
+      <div class="legend">
+        <div style="font-weight:600; margin-bottom:6px;">樓齡</div>
+        <div class="legend-item"><div class="dot" style="background:#10b981"></div> 20年以下</div>
+        <div class="legend-item"><div class="dot" style="background:#f59e0b"></div> 20–40年</div>
+        <div class="legend-item"><div class="dot" style="background:#ef4444"></div> 40年以上</div>
+        <div style="margin-top:10px; font-weight:600;">設施</div>
+        <div class="legend-item"><div class="dot" style="background:#60a5fa"></div> 公園 / 街市 / 交通</div>
+      </div>
+      <div class="footer-note">數據來源：data.gov.hk 開放數據（示範版本）</div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const districts = {
+      "沙田區": { center: [22.38, 114.19], zoom: 14 },
+      "中西區": { center: [22.28, 114.15], zoom: 15 },
+      "灣仔區": { center: [22.28, 114.17], zoom: 15 },
+      "東區": { center: [22.28, 114.22], zoom: 14 },
+      "南區": { center: [22.24, 114.16], zoom: 13 },
+      "油尖旺區": { center: [22.31, 114.17], zoom: 15 },
+      "深水埗區": { center: [22.33, 114.16], zoom: 15 },
+      "九龍城區": { center: [22.33, 114.19], zoom: 15 },
+      "黃大仙區": { center: [22.34, 114.20], zoom: 15 },
+      "觀塘區": { center: [22.32, 114.23], zoom: 14 },
+      "大埔區": { center: [22.45, 114.17], zoom: 13 },
+      "北區": { center: [22.50, 114.13], zoom: 13 },
+      "元朗區": { center: [22.44, 114.03], zoom: 13 },
+      "屯門區": { center: [22.39, 113.98], zoom: 13 },
+      "荃灣區": { center: [22.37, 114.12], zoom: 14 },
+      "葵青區": { center: [22.36, 114.13], zoom: 14 },
+      "西貢區": { center: [22.38, 114.27], zoom: 12 },
+      "離島區": { center: [22.26, 113.95], zoom: 12 }
+    };
+
+    const sampleBuildings = {
+      "沙田區": [
+        { lat: 22.382, lng: 114.195, name: "沙田中心", address: "沙田正街", opYear: 1981, type: "住宅" },
+        { lat: 22.378, lng: 114.188, name: "新城市廣場", address: "沙田正街", opYear: 1985, type: "商業" },
+        { lat: 22.375, lng: 114.192, name: "第一城", address: "銀城街", opYear: 1981, type: "住宅" },
+        { lat: 22.370, lng: 114.185, name: "博康邨", address: "博康邨", opYear: 1982, type: "公屋" },
+        { lat: 22.385, lng: 114.200, name: "富豪花園", address: "沙田", opYear: 1990, type: "住宅" },
+        { lat: 22.368, lng: 114.198, name: "漑源邨", address: "漑源邨", opYear: 1976, type: "公屋" }
+      ],
+      "中西區": [
+        { lat: 22.282, lng: 114.155, name: "中環中心", address: "皇后大道中", opYear: 1998, type: "商業" },
+        { lat: 22.285, lng: 114.150, name: "蘭桂坊附近樓宇", address: "蘭桂坊", opYear: 1965, type: "住宅" },
+        { lat: 22.278, lng: 114.148, name: "堅尼地城樓宇", address: "堅尼地城", opYear: 1978, type: "住宅" }
+      ],
+      "油尖旺區": [
+        { lat: 22.298, lng: 114.172, name: "尖沙咀樓宇", address: "彌敦道", opYear: 1972, type: "住宅" },
+        { lat: 22.319, lng: 114.169, name: "旺角中心", address: "旺角", opYear: 1985, type: "商業" },
+        { lat: 22.312, lng: 114.165, name: "油麻地樓宇", address: "油麻地", opYear: 1968, type: "住宅" }
+      ],
+      "觀塘區": [
+        { lat: 22.312, lng: 114.225, name: "apm", address: "觀塘", opYear: 2005, type: "商業" },
+        { lat: 22.315, lng: 114.230, name: "牛頭角樓宇", address: "牛頭角", opYear: 1975, type: "住宅" }
+      ]
+    };
+
+    const facilities = [
+      { lat: 22.380, lng: 114.190, name: "沙田公園", type: "公園", district: "沙田區" },
+      { lat: 22.376, lng: 114.186, name: "沙田街市", type: "街市", district: "沙田區" },
+      { lat: 22.382, lng: 114.187, name: "沙田站", type: "MTR", district: "沙田區" },
+      { lat: 22.281, lng: 114.158, name: "中環公園", type: "公園", district: "中西區" },
+      { lat: 22.297, lng: 114.172, name: "尖沙咀海濱公園", type: "公園", district: "油尖旺區" }
+    ];
+
+    const map = L.map('map').setView([22.38, 114.19], 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      maxZoom: 19
+    }).addTo(map);
+
+    let buildingLayer = L.layerGroup().addTo(map);
+    let facilityLayer = L.layerGroup().addTo(map);
+
+    function getAgeColor(year) {
+      const age = new Date().getFullYear() - year;
+      if (age < 20) return '#10b981';
+      if (age < 40) return '#f59e0b';
+      return '#ef4444';
+    }
+
+    function getAgeLabel(year) {
+      return new Date().getFullYear() - year;
+    }
+
+    function loadDistrict(district) {
+      buildingLayer.clearLayers();
+      facilityLayer.clearLayers();
+
+      const buildings = sampleBuildings[district] || [];
+      buildings.forEach(b => {
+        const color = getAgeColor(b.opYear);
+        const marker = L.circleMarker([b.lat, b.lng], {
+          radius: 8,
+          fillColor: color,
+          color: '#fff',
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.85
+        }).addTo(buildingLayer);
+
+        marker.on('click', () => {
+          document.getElementById('infoTitle').textContent = b.name;
+          document.getElementById('infoContent').innerHTML = `
+            <div class="info-row"><strong>地址：</strong>${b.address}</div>
+            <div class="info-row"><strong>類型：</strong>${b.type}</div>
+            <div class="info-row"><strong>佔用許可年份：</strong>${b.opYear}</div>
+            <div class="info-row"><strong>估算樓齡：</strong>${getAgeLabel(b.opYear)} 年</div>
+            <div class="info-row" style="margin-top:10px; font-size:11px;">數據來源：屋宇署樓宇資料及樓齡紀錄</div>
+          `;
+          document.getElementById('infoPanel').classList.add('show');
+        });
+      });
+
+      facilities.filter(f => f.district === district).forEach(f => {
+        L.circleMarker([f.lat, f.lng], {
+          radius: 6,
+          fillColor: '#60a5fa',
+          color: '#fff',
+          weight: 1,
+          fillOpacity: 0.8
+        }).bindPopup(`<b>${f.name}</b><br>${f.type}`).addTo(facilityLayer);
+      });
+
+      const d = districts[district];
+      if (d) map.setView(d.center, d.zoom);
+
+      const avgAge = buildings.length
+        ? Math.round(buildings.reduce((s, b) => s + getAgeLabel(b.opYear), 0) / buildings.length)
+        : 0;
+      document.getElementById('districtStats').innerHTML = `
+        <div><strong>${district}</strong></div>
+        <div>樓宇數量（示範）：${buildings.length}</div>
+        <div>平均樓齡：${avgAge || '—'} 年</div>
+        <div style="margin-top:8px; font-size:11px;">設施：公園、街市、MTR</div>
+      `;
+
+      document.querySelectorAll('.district-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.district === district);
+      });
+    }
+
+    document.querySelectorAll('.district-btn').forEach(btn => {
+      btn.addEventListener('click', () => loadDistrict(btn.dataset.district));
+    });
+
+    map.on('click', () => document.getElementById('infoPanel').classList.remove('show'));
+
+    loadDistrict('沙田區');
+  </script>
+</body>
+</html>
