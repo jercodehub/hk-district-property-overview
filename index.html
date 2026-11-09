@@ -6,7 +6,6 @@
   <title>香港地區物業概覽 | HK District Property Overview</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <style>
     :root {
       --bg: #0f1419;
@@ -42,8 +41,10 @@
     .layout { display: flex; height: calc(100vh - 52px); position: relative; }
     .sidebar {
       width: 260px; background: var(--panel); border-right: 1px solid var(--border);
-      overflow-y: auto; padding: 12px; transition: transform 0.25s ease; z-index: 1001;
+      display: flex; flex-direction: column; overflow: hidden;
+      transition: transform 0.25s ease; z-index: 1001;
     }
+    .district-scroll { overflow-y: auto; flex: 1; min-height: 0; padding: 12px 12px 8px; overscroll-behavior: contain; }
     .sidebar.hidden { transform: translateX(-100%); position: absolute; height: 100%; }
     .sidebar h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 10px; }
     .district-btn {
@@ -58,16 +59,62 @@
     .legend {
       position: absolute; bottom: 16px; left: 12px; background: var(--panel);
       border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; z-index: 1000; font-size: 11px;
+      max-width: min(230px, calc(100% - 24px));
     }
+    .legend-title { font-weight: 600; margin-bottom: 4px; }
     .legend-item { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .stats { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+    .legend-key {
+      display: flex; gap: 8px; align-items: center; margin-top: 6px; padding-top: 6px;
+      border-top: 1px solid var(--border);
+    }
+    .legend-key-icon { width: 44px; height: 44px; flex: none; }
+    .legend-note { color: var(--text-muted); line-height: 1.35; font-size: 10px; }
+    .stats {
+      flex: none; margin-top: 0; padding: 10px 12px 12px; border-top: 1px solid var(--border);
+      font-size: 12px; color: var(--text-muted); background: var(--panel);
+    }
+    .stats-title { color: var(--text); font-weight: 600; margin-bottom: 4px; }
+    .band-heading { margin-top: 8px; margin-bottom: 2px; font-size: 11px; }
+    .band-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 11px; color: var(--text); }
+    .band-label { width: 62px; flex: none; color: var(--text-muted); }
+    .band-bar { flex: 1; height: 6px; background: #243044; border-radius: 99px; overflow: hidden; min-width: 28px; }
+    .band-bar > span { display: block; height: 100%; border-radius: 99px; }
+    .band-n { min-width: 42px; flex: none; text-align: right; font-variant-numeric: tabular-nums; }
+    .stats-source { margin-top: 8px; font-size: 11px; color: #8b9bb4; line-height: 1.4; }
+    .age-cluster-icon { background: transparent !important; border: none !important; cursor: pointer; }
+    .age-pie {
+      width: 100%; height: 100%; border-radius: 50%; box-sizing: border-box;
+      border: 1.5px solid #fff; padding: 12%; background-clip: padding-box;
+      box-shadow: 0 1px 3px rgba(15, 20, 25, 0.45);
+    }
+    .age-pie-hole {
+      width: 100%; height: 100%; border-radius: 50%; background: #1a2332;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      line-height: 1; pointer-events: none; user-select: none;
+    }
+    .age-avg { font-weight: 700; letter-spacing: -0.03em; }
+    .age-num { font-size: 14px; }
+    .age-num.is-long { font-size: 12px; }
+    .age-unit { font-size: 9px; margin-left: 0.5px; }
+    .age-count {
+      margin-top: 1px; font-size: 10px; font-weight: 600; color: #d5deea;
+      font-variant-numeric: tabular-nums;
+    }
+    .age-count.is-wide { font-size: 8px; letter-spacing: -0.04em; }
+    .legend-key-icon .age-num { font-size: 12px; }
+    .legend-key-icon .age-unit, .legend-key-icon .age-count { font-size: 8px; }
+    .age-cluster-icon:hover .age-pie { transform: scale(1.06); }
+    @media (prefers-reduced-motion: reduce) {
+      .age-cluster-icon:hover .age-pie { transform: none; }
+    }
     .loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 2000; background: var(--panel); padding: 20px; border-radius: 8px; }
     .leaflet-popup-content { font-size: 13px; line-height: 1.4; }
     @media (max-width: 768px) {
-      .sidebar { position: absolute; height: 100%; }
+      .sidebar { position: absolute; height: 100%; width: min(260px, 86vw); }
       .sidebar.hidden { transform: translateX(-100%); }
-      .legend { bottom: 70px; font-size: 10px; }
+      .legend { bottom: 70px; left: 8px; font-size: 10px; padding: 8px 10px; }
+      .legend-key-icon { width: 40px; height: 40px; }
     }
   </style>
 </head>
@@ -81,6 +128,7 @@
   </div>
   <div class="layout">
     <div class="sidebar" id="sidebar">
+      <div class="district-scroll">
       <h2>選擇地區</h2>
       <div class="region-label">香港島</div>
       <button class="district-btn" data-district="中西區">中西區</button>
@@ -103,16 +151,28 @@
       <button class="district-btn" data-district="葵青區">葵青區</button>
       <button class="district-btn" data-district="西貢區">西貢區</button>
       <button class="district-btn" data-district="離島區">離島區</button>
+      </div>
       <div class="stats" id="districtStats">載入數據中…</div>
     </div>
     <div class="map-container">
       <div id="map"></div>
       <div class="loading" id="loading">載入全港樓宇資料中…</div>
       <div class="legend">
-        <div style="font-weight:600; margin-bottom:4px;">樓齡</div>
+        <div class="legend-title">樓齡</div>
         <div class="legend-item"><div class="dot" style="background:#10b981"></div> 20年以下</div>
         <div class="legend-item"><div class="dot" style="background:#f59e0b"></div> 20–40年</div>
         <div class="legend-item"><div class="dot" style="background:#ef4444"></div> 40年以上</div>
+        <div class="legend-key">
+          <div class="legend-key-icon" aria-hidden="true">
+            <div class="age-pie" style="background: conic-gradient(#10b981 0 33%, #f59e0b 33% 66%, #ef4444 66% 100%)">
+              <div class="age-pie-hole">
+                <div class="age-avg" style="color:#f59e0b"><span class="age-num">29</span><span class="age-unit">年</span></div>
+                <div class="age-count">120</div>
+              </div>
+            </div>
+          </div>
+          <div class="legend-note">大字：平均樓齡<br>細字：樓宇幢數<br>圓環：樓齡比例<br>點擊可放大</div>
+        </div>
       </div>
     </div>
   </div>
@@ -150,6 +210,12 @@
     let allData = {};
     let clusterGroup = null;
 
+    const AGE_BANDS = [
+      { key: 'young', color: '#10b981', label: '20年以下' },
+      { key: 'mid', color: '#f59e0b', label: '20–40年' },
+      { key: 'old', color: '#ef4444', label: '40年以上' }
+    ];
+
     function finiteNum(value) {
       const n = typeof value === 'number' ? value : Number(value);
       return Number.isFinite(n) ? n : null;
@@ -172,27 +238,133 @@
       if (!Number.isFinite(year)) return null;
       return new Date().getFullYear() - year;
     }
+    function bandKey(age) {
+      if (age < 20) return 'young';
+      if (age < 40) return 'mid';
+      return 'old';
+    }
     function getAgeColor(year) {
       const age = getAge(year);
       if (age == null) return '#94a3b8';
-      if (age < 20) return '#10b981';
-      if (age < 40) return '#f59e0b';
-      return '#ef4444';
+      return AGE_BANDS.find(band => band.key === bandKey(age)).color;
+    }
+    function emptyCounts() {
+      return { young: 0, mid: 0, old: 0 };
+    }
+    function summarizeAges(ages) {
+      const counts = emptyCounts();
+      let sum = 0;
+      for (const age of ages) {
+        if (age == null) continue;
+        sum += age;
+        counts[bandKey(age)]++;
+      }
+      const total = counts.young + counts.mid + counts.old;
+      return {
+        counts,
+        total,
+        avg: total ? Math.round(sum / total) : null
+      };
+    }
+    function ageColorForAverage(avg) {
+      if (avg == null) return '#94a3b8';
+      return AGE_BANDS.find(band => band.key === bandKey(avg)).color;
+    }
+    function conicGradient(counts, total) {
+      if (!total) return '#64748b';
+      let cursor = 0;
+      const stops = [];
+      for (const band of AGE_BANDS) {
+        const n = counts[band.key];
+        if (!n) continue;
+        const start = (cursor / total) * 100;
+        cursor += n;
+        const end = (cursor / total) * 100;
+        stops.push(`${band.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`);
+      }
+      return `conic-gradient(${stops.join(',')})`;
+    }
+    function clusterRadiusForZoom(zoom) {
+      if (zoom <= 12) return 72;
+      if (zoom === 13) return 62;
+      if (zoom === 14) return 56;
+      if (zoom === 15) return 58;
+      return 46;
+    }
+    function clusterIconSize(zoom) {
+      if (zoom >= 16) return 40;
+      if (zoom >= 15) return 44;
+      return 50;
+    }
+    function createAgeClusterIcon(cluster) {
+      const markers = cluster.getAllChildMarkers();
+      const summary = summarizeAges(markers.map(marker => getAge(marker.options.year)));
+      const count = cluster.getChildCount();
+      const zoom = Number.isFinite(cluster._zoom) ? cluster._zoom : map.getZoom();
+      const size = clusterIconSize(zoom);
+      const avg = summary.avg;
+      const avgColor = ageColorForAverage(avg);
+      const avgHtml = avg == null
+        ? '<span class="age-num">—</span>'
+        : `<span class="age-num${avg >= 100 ? ' is-long' : ''}">${avg}</span><span class="age-unit">年</span>`;
+      const label = `${count}幢` +
+        (avg == null ? '' : `，平均${avg}年`) +
+        `，20年以下${summary.counts.young}，20–40年${summary.counts.mid}，40年以上${summary.counts.old}`;
+      const html = `<div class="age-pie" style="background:${conicGradient(summary.counts, summary.total)}" role="img" aria-label="${esc(label)}">
+          <div class="age-pie-hole">
+            <div class="age-avg" style="color:${avgColor}">${avgHtml}</div>
+            <div class="age-count${count >= 1000 ? ' is-wide' : ''}">${count}</div>
+          </div>
+        </div>`;
+      return L.divIcon({
+        html,
+        className: 'age-cluster-icon',
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2]
+      });
+    }
+    function renderDistrictStats(district, buildings) {
+      const summary = summarizeAges(buildings.map(b => getAge(b.year)));
+      const rows = AGE_BANDS.map(band => {
+        const n = summary.counts[band.key];
+        const pct = summary.total ? (n / summary.total) * 100 : 0;
+        return `<div class="band-row">
+          <span class="dot" style="background:${band.color}"></span>
+          <span class="band-label">${band.label}</span>
+          <span class="band-bar"><span style="width:${pct.toFixed(1)}%;background:${band.color}"></span></span>
+          <span class="band-n">${n.toLocaleString('zh-HK')}</span>
+        </div>`;
+      }).join('');
+      document.getElementById('districtStats').innerHTML = `
+        <div class="stats-title">${esc(district)}</div>
+        <div>樓宇數量：${buildings.length.toLocaleString('zh-HK')}</div>
+        <div>平均樓齡：${summary.avg == null ? '—' : summary.avg + ' 年'}</div>
+        <div class="band-heading">樓齡分布</div>
+        ${rows}
+        <div class="stats-source">數據來源：屋宇署樓宇資料及樓齡紀錄</div>
+      `;
     }
 
     function loadDistrict(district) {
       if (clusterGroup) map.removeLayer(clusterGroup);
+      const view = districts[district];
+      if (view) map.setView(view.center, view.zoom);
+
       clusterGroup = L.markerClusterGroup({
         chunkedLoading: true,
-        maxClusterRadius: 50,
+        maxClusterRadius: clusterRadiusForZoom,
+        disableClusteringAtZoom: 17,
         spiderfyOnMaxZoom: true,
-        showCoverageOnHover: false
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        iconCreateFunction: createAgeClusterIcon,
+        spiderLegPolylineOptions: { weight: 1.5, color: '#334155', opacity: 0.75 }
       });
 
       const buildings = (Array.isArray(allData[district]) ? allData[district] : [])
         .map(usableBuilding)
         .filter(Boolean);
-      buildings.forEach(b => {
+      const markers = buildings.map(b => {
         const age = getAge(b.year);
         const marker = L.circleMarker([b.lat, b.lng], {
           radius: 6,
@@ -200,7 +372,8 @@
           color: '#fff',
           weight: 1,
           opacity: 1,
-          fillOpacity: 0.8
+          fillOpacity: 0.85,
+          year: b.year
         });
         marker.bindPopup(`
           <b>${esc(b.addr || '樓宇')}</b><br>
@@ -208,23 +381,11 @@
           佔用許可年份：${esc(b.year)}<br>
           估算樓齡：${age == null ? '—' : esc(age)} 年
         `);
-        clusterGroup.addLayer(marker);
+        return marker;
       });
-
+      clusterGroup.addLayers(markers);
       map.addLayer(clusterGroup);
-
-      const d = districts[district];
-      if (d) map.setView(d.center, d.zoom);
-
-      const avgAge = buildings.length
-        ? Math.round(buildings.reduce((s, b) => s + getAge(b.year), 0) / buildings.length)
-        : 0;
-      document.getElementById('districtStats').innerHTML = `
-        <div><strong>${district}</strong></div>
-        <div>樓宇數量：${buildings.length.toLocaleString()}</div>
-        <div>平均樓齡：${avgAge || '—'} 年</div>
-        <div style="margin-top:6px; font-size:11px; color:#8b9bb4;">數據來源：屋宇署樓宇資料及樓齡紀錄</div>
-      `;
+      renderDistrictStats(district, buildings);
 
       document.querySelectorAll('.district-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.district === district);
