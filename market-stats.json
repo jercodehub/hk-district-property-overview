@@ -12,7 +12,7 @@
     "nilNote": "來源以「-」表示沒有錄得，這裡記為 0，並以 completionsNil 標示。",
     "belowNote": "completionsShareBelow 為 true 時，落成量佔上年存量少於 0.05%（來源註釋「+」）。",
     "stockNote": "最新年底總存量來自最新差餉估價紀錄，不是上年存量加落成量。",
-    "omitted": "此表沒有分區樓價，也沒有分區吸納量。"
+    "omitted": "此表沒有分區樓價，也沒有分區吸納量。樓價見 prices：平均售價只到港島／九龍／新界，售價指數是全港。"
   },
   "periods": {
     "priorStockYear": 2023,
@@ -242,6 +242,252 @@
       "completionsShareBelow": false,
       "vacant": 25270,
       "vacancyPct": 4.5
+    }
+  },
+  "prices": {
+    "source": {
+      "provider": "差餉物業估價署",
+      "providerEn": "Rating and Valuation Department",
+      "packageId": "hk-rvd-tsinfo_rvd-property-market-statistics",
+      "title": "私人住宅平均售價（按類別及區域）及全港售價指數",
+      "datasetUrl": "https://data.gov.hk/tc-data/dataset/hk-rvd-tsinfo_rvd-property-market-statistics",
+      "averagePricesCsvUrl": "https://www.rvd.gov.hk/datagovhk/1.2M.csv",
+      "priceIndexCsvUrl": "https://www.rvd.gov.hk/datagovhk/1.4M.csv",
+      "dictionaryUrl": "https://www.rvd.gov.hk/datagovhk/Data_Dic.pdf",
+      "averagePriceTitle": "私人住宅 — 各類單位平均售價（每月）",
+      "priceIndexTitle": "私人住宅 — 各類單位售價指數（全港，每月）",
+      "unit": "港元／平方米（實用面積）",
+      "indexBase": "1999 = 100",
+      "grain": "平均售價只到港島、九龍、新界，不是區議會 18 區。1999 年起九龍包括新九龍。售價指數是全港，按單位類別。",
+      "primarySalesNote": "不包括住宅樓宇的首次買賣。",
+      "mixNote": "平均售價會受所分析單位的質素影響，不能直接當成價格升跌。看升跌用售價指數。",
+      "provisionalNote": "provisional 為 true 代表來源註 P，屬臨時數字。",
+      "fewTransactionsNote": "fewTransactions 為 true 代表來源註 Z，少於 20 宗成交。",
+      "nilNote": "沒有成交（來源「-」）記為 value null，並以 noTransaction 標示。"
+    },
+    "classes": [
+      {
+        "id": "A",
+        "label": "A 類",
+        "area": "實用面積少於 40 平方米"
+      },
+      {
+        "id": "B",
+        "label": "B 類",
+        "area": "實用面積 40 至 69.9 平方米"
+      },
+      {
+        "id": "C",
+        "label": "C 類",
+        "area": "實用面積 70 至 99.9 平方米"
+      },
+      {
+        "id": "D",
+        "label": "D 類",
+        "area": "實用面積 100 至 159.9 平方米"
+      },
+      {
+        "id": "E",
+        "label": "E 類",
+        "area": "實用面積 160 平方米或以上"
+      }
+    ],
+    "regions": [
+      "港島",
+      "九龍",
+      "新界"
+    ],
+    "districtRegion": {
+      "中西區": "港島",
+      "灣仔區": "港島",
+      "東區": "港島",
+      "南區": "港島",
+      "油尖旺區": "九龍",
+      "深水埗區": "九龍",
+      "九龍城區": "九龍",
+      "黃大仙區": "九龍",
+      "觀塘區": "九龍",
+      "沙田區": "新界",
+      "大埔區": "新界",
+      "北區": "新界",
+      "元朗區": "新界",
+      "屯門區": "新界",
+      "荃灣區": "新界",
+      "葵青區": "新界",
+      "西貢區": "新界",
+      "離島區": "新界"
+    },
+    "averagePrices": {
+      "month": "2026-09",
+      "year": 2026,
+      "monthNumber": 9,
+      "provisional": true,
+      "allProvisional": true,
+      "unit": "港元／平方米（實用面積）",
+      "areas": {
+        "港島": {
+          "A": {
+            "value": 144419,
+            "provisional": true,
+            "fewTransactions": false,
+            "noTransaction": false
+          },
+          "B": {
+            "value": 157538,
+            "provisional": true,
+            "fewTransactions": false,
+            "noTransaction": false
+          },
+          "C": {
+            "value": 187414,
+            "provisional": true,
+            "fewTransactions": false,
+            "noTransaction": false
+          },
+          "D": {
+            "value": 201680,
+            "provisional": true,
+            "fewTransactions": false,
+            "noTransaction": false
+          },
+          "E": {
+            "value": 308113,
+            "provisional": true,
+            "fewTransactions": true,
+            "noTransaction": false
+          }
+        },
+        "九龍": {
+          "A": {
+            "value": 134337,
+            "provisional": true,
+            "fewTransactions": false,
+            "noTransaction": false
+          },
+          "B": {
+            "value": 136529,
+            "provisional": true,
+            "fewTransactions": false,
+            "noTransaction": false
+          },
+          "C": {
+            "value": 172982,
+            "provisional": true,
+            "fewTransactions": false,
+            "noTransaction": false
+          },
+          "D": {
+            "value": 188500,
+            "provisional": true,
+            "fewTransactions": false,
+            "noTransaction": false
+          },
+          "E": {
+            "value": 263433,
+            "provisional": true,
+            "fewTransactions": true,
+            "noTransaction": false
+          }
+        },
+        "新界": {
+          "A": {
+            "value": 121237,
+            "provisional": true,
+            "fewTransactions": false,
+            "noTransaction": false
+          },
+          "B": {
+            "value": 109898,
+            "provisional": true,
+            "fewTransactions": false,
+            "noTransaction": false
+          },
+          "C": {
+            "value": 127637,
+            "provisional": true,
+            "fewTransactions": false,
+            "noTransaction": false
+          },
+          "D": {
+            "value": 129005,
+            "provisional": true,
+            "fewTransactions": false,
+            "noTransaction": false
+          },
+          "E": {
+            "value": 110833,
+            "provisional": true,
+            "fewTransactions": false,
+            "noTransaction": false
+          }
+        }
+      }
+    },
+    "priceIndex": {
+      "month": "2026-09",
+      "year": 2026,
+      "monthNumber": 9,
+      "base": "1999 = 100",
+      "grain": "全港",
+      "provisional": true,
+      "allProvisional": true,
+      "series": {
+        "all": {
+          "value": 320.8,
+          "provisional": true,
+          "fewTransactions": false,
+          "noTransaction": false
+        },
+        "abc": {
+          "value": 322.6,
+          "provisional": true,
+          "fewTransactions": false,
+          "noTransaction": false
+        },
+        "de": {
+          "value": 291.5,
+          "provisional": true,
+          "fewTransactions": false,
+          "noTransaction": false
+        },
+        "A": {
+          "value": 340.4,
+          "provisional": true,
+          "fewTransactions": false,
+          "noTransaction": false
+        },
+        "B": {
+          "value": 312.6,
+          "provisional": true,
+          "fewTransactions": false,
+          "noTransaction": false
+        },
+        "C": {
+          "value": 307.1,
+          "provisional": true,
+          "fewTransactions": false,
+          "noTransaction": false
+        },
+        "D": {
+          "value": 293,
+          "provisional": true,
+          "fewTransactions": false,
+          "noTransaction": false
+        },
+        "E": {
+          "value": 286.8,
+          "provisional": true,
+          "fewTransactions": false,
+          "noTransaction": false
+        }
+      },
+      "previous": {
+        "month": "2026-08",
+        "year": 2026,
+        "monthNumber": 8,
+        "all": 320.2,
+        "change": "+0.6"
+      }
     }
   }
 }
