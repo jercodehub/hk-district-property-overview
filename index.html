@@ -150,13 +150,35 @@
     let allData = {};
     let clusterGroup = null;
 
+    function finiteNum(value) {
+      const n = typeof value === 'number' ? value : Number(value);
+      return Number.isFinite(n) ? n : null;
+    }
+    function usableBuilding(b) {
+      if (!b || typeof b !== 'object') return null;
+      const lat = finiteNum(b.lat);
+      const lng = finiteNum(b.lng);
+      const year = finiteNum(b.year);
+      if (lat == null || lng == null || year == null) return null;
+      if (lat < 22 || lat > 23 || lng < 113 || lng > 115) return null;
+      return { addr: b.addr, type: b.type, year: year, lat: lat, lng: lng };
+    }
+    function esc(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
+    function getAge(year) {
+      if (!Number.isFinite(year)) return null;
+      return new Date().getFullYear() - year;
+    }
     function getAgeColor(year) {
-      const age = new Date().getFullYear() - year;
+      const age = getAge(year);
+      if (age == null) return '#94a3b8';
       if (age < 20) return '#10b981';
       if (age < 40) return '#f59e0b';
       return '#ef4444';
     }
-    function getAge(year) { return new Date().getFullYear() - year; }
 
     function loadDistrict(district) {
       if (clusterGroup) map.removeLayer(clusterGroup);
@@ -167,8 +189,11 @@
         showCoverageOnHover: false
       });
 
-      const buildings = allData[district] || [];
+      const buildings = (Array.isArray(allData[district]) ? allData[district] : [])
+        .map(usableBuilding)
+        .filter(Boolean);
       buildings.forEach(b => {
+        const age = getAge(b.year);
         const marker = L.circleMarker([b.lat, b.lng], {
           radius: 6,
           fillColor: getAgeColor(b.year),
@@ -178,10 +203,10 @@
           fillOpacity: 0.8
         });
         marker.bindPopup(`
-          <b>${b.addr || '樓宇'}</b><br>
-          類型：${b.type || '—'}<br>
-          佔用許可年份：${b.year}<br>
-          估算樓齡：${getAge(b.year)} 年
+          <b>${esc(b.addr || '樓宇')}</b><br>
+          類型：${esc(b.type || '—')}<br>
+          佔用許可年份：${esc(b.year)}<br>
+          估算樓齡：${age == null ? '—' : esc(age)} 年
         `);
         clusterGroup.addLayer(marker);
       });
@@ -218,7 +243,22 @@
     if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden');
 
     fetch('buildings.json')
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('無法讀取樓宇資料（HTTP ' + r.status + '）');
+        return r.text();
+      })
+      .then(text => {
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('樓宇資料不是有效的 JSON');
+        }
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+          throw new Error('樓宇資料格式不正確');
+        }
+        return data;
+      })
       .then(data => {
         allData = data;
         document.getElementById('loading').style.display = 'none';
@@ -226,7 +266,9 @@
         setTimeout(() => map.invalidateSize(), 100);
       })
       .catch(err => {
-        document.getElementById('loading').textContent = '載入失敗：' + err.message;
+        const message = err && err.message ? err.message : '未知錯誤';
+        document.getElementById('loading').textContent = '載入失敗：' + message;
+        document.getElementById('districtStats').textContent = '未能載入樓宇資料。';
         console.error(err);
       });
   </script>

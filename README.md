@@ -1,19 +1,39 @@
 # 香港地區物業概覽
 
-District Property Overview — 結合樓齡、附近設施與交通的互動地圖。
+District Property Overview — 按 18 區瀏覽私人樓宇位置與樓齡的互動地圖。
 
 ## 功能
-- 18區篩選
-- 樓宇樓齡顏色標記（點擊查看詳情）
-- 附近設施疊加（公園、街市、交通站）
-- 專業規劃風格介面
+- 18 區篩選（開啟時顯示沙田區）
+- 按樓齡著色的地圖標記，點擊查看地址、類型、佔用許可年份與估算樓齡
+- 標記聚合，方便一次瀏覽大量樓宇
+- 窄螢幕可收合側欄
 
-## 數據來源
-- data.gov.hk 開放數據（屋宇署樓宇資料及樓齡紀錄、房委會、運輸署等）
-- 目前為示範版本，使用代表性樣本數據
+地圖只顯示樓宇點位，沒有公園、街市或交通站等設施圖層。
+
+## 數據
+`buildings.json` 由屋宇署「樓宇資料及樓齡紀錄」開放數據轉出，涵蓋全港 18 區（約 5 萬幢有佔用許可年份及座標的私人樓宇）。這不是抽樣檔。
+
+- 數據集：`hk-bd-opendata-building-information`
+- 下載：https://static.csdi.gov.hk/csdi-webpage/download/0e55c533715b5da3ae0ca6e6024e90b4/csv
+- 每筆記錄：`addr`（地址）、`type`（佔用許可證上的用途，並註明座或平台）、`year`（佔用許可年份）、`lat`、`lng`
+- 鍵名與頁面上的 18 區一致。源數據有些分區沒有「區」字，轉換時會補上。沒有分區的紀錄（例如落馬洲河套，標成 Out Of District）以及沒有佔用許可日期的紀錄不會放進地圖。
+
+重新產生（需要網絡）：
+
+```bash
+python3 scripts/build_buildings.py
+```
+
+檔案若需要再縮小，可以每區抽樣，例如 `python3 scripts/build_buildings.py --max-per-district 400`。倉庫目前提交的是全量結果。
 
 ## 本地預覽
-直接開啟 `index.html` 即可。
+用瀏覽器直接開啟 `index.html` 時，`fetch` 讀不到旁邊的 JSON。請先在倉庫根目錄啟動靜態伺服器：
+
+```bash
+python3 -m http.server 8080
+```
+
+然後開啟 http://localhost:8080/ 。
 
 ## 部署
-可使用 GitHub Pages。
+可放在 GitHub Pages，發佈倉庫根目錄即可。`buildings.json` 約 6–7 MB。
