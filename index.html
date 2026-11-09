@@ -96,6 +96,7 @@
     .stats {
       flex: none; margin-top: 0; padding: 10px 12px 12px; border-top: 1px solid var(--border);
       font-size: 12px; color: var(--text-muted); background: var(--panel);
+      max-height: min(58vh, 540px); overflow-y: auto; overscroll-behavior: contain;
     }
     .stats-title { color: var(--text); font-weight: 600; margin-bottom: 4px; }
     .band-heading { margin-top: 8px; margin-bottom: 2px; font-size: 11px; }
@@ -105,6 +106,26 @@
     .band-bar > span { display: block; height: 100%; border-radius: 99px; }
     .band-n { min-width: 42px; flex: none; text-align: right; font-variant-numeric: tabular-nums; }
     .stats-source { margin-top: 8px; font-size: 11px; color: #8b9bb4; line-height: 1.4; }
+    .market {
+      margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+    }
+    .market-kicker {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+      color: var(--text-muted); margin-bottom: 6px;
+    }
+    .market-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .market-card {
+      background: #121a27; border: 1px solid var(--border); border-radius: 8px;
+      padding: 6px 8px 5px; min-width: 0;
+    }
+    .market-label { font-size: 10px; color: var(--text-muted); line-height: 1.3; }
+    .market-value {
+      margin-top: 2px; font-size: 15px; font-weight: 700; color: var(--text);
+      font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.2;
+    }
+    .market-hint { margin-top: 2px; font-size: 10px; color: var(--text-muted); line-height: 1.35; }
+    .market-note { margin-top: 6px; font-size: 10px; color: #8b9bb4; line-height: 1.35; }
+    .market-note a { color: #93c5fd; }
     .age-cluster-icon { background: transparent !important; border: none !important; cursor: pointer; }
     .age-pie {
       width: 100%; height: 100%; border-radius: 50%; box-sizing: border-box;
@@ -149,7 +170,7 @@
     <button class="menu-btn" id="menuBtn" type="button" aria-label="開關地區選單">☰</button>
     <div class="header-titles">
       <h1>香港地區物業概覽</h1>
-      <div class="subtitle">District Property Overview · 全港私樓資料（屋宇署）</div>
+      <div class="subtitle">樓齡（屋宇署）· 私人住宅市場統計（估價署）</div>
     </div>
     <button class="overview-chip" id="overviewChip" type="button" data-view="hongkong" aria-pressed="false">全港</button>
   </div>
@@ -182,7 +203,10 @@
       <button class="district-btn" type="button" data-district="西貢區">西貢區</button>
       <button class="district-btn" type="button" data-district="離島區">離島區</button>
       </div>
-      <div class="stats" id="districtStats">載入數據中…</div>
+      <div class="stats" id="districtStats">
+        <div id="ageStats">載入數據中…</div>
+        <div id="marketStats"></div>
+      </div>
     </div>
     <div class="map-container">
       <div id="map"></div>
@@ -246,6 +270,7 @@
     let allData = {};
     let clusterGroup = null;
     let currentView = null;
+    let requestedKey = '沙田區';
     let pendingView = null;
     let viewToken = 0;
     let clusterBusy = false;
@@ -388,7 +413,7 @@
           <span class="band-n">${formatCount(n)}</span>
         </div>`;
       }).join('');
-      document.getElementById('districtStats').innerHTML = `
+      document.getElementById('ageStats').innerHTML = `
         <div class="stats-title">${esc(title)}</div>
         ${detail ? `<div>${esc(detail)}</div>` : ''}
         <div>樓宇數量：${formatCount(buildings.length)}</div>
@@ -396,6 +421,81 @@
         <div class="band-heading">樓齡分布</div>
         ${rows}
         <div class="stats-source">數據來源：屋宇署樓宇資料及樓齡紀錄</div>
+      `;
+      renderMarket(title);
+    }
+    let marketStats = null;
+    let marketState = 'loading';
+    function safeHttpsUrl(url) {
+      return typeof url === 'string' && /^https:\/\/[^\s"'<>]+$/.test(url) ? url : '';
+    }
+    function usableMarket(data) {
+      if (!data || typeof data !== 'object' || !data.areas || typeof data.areas !== 'object') return null;
+      const periods = data.periods || {};
+      const years = ['priorStockYear', 'stockYear', 'completionsYear', 'vacancyYear'];
+      if (!years.every(key => Number.isInteger(periods[key]))) return null;
+      if (!data.areas['全港'] || !data.areas['沙田區']) return null;
+      return data;
+    }
+    function usableMarketRow(row) {
+      if (!row || typeof row !== 'object') return false;
+      return ['stock', 'stockPrior', 'completions', 'vacant'].every(key => Number.isFinite(Number(row[key])));
+    }
+    function marketCard(label, value, hint) {
+      return `<div class="market-card">
+        <div class="market-label">${esc(label)}</div>
+        <div class="market-value">${esc(value)}</div>
+        <div class="market-hint">${esc(hint)}</div>
+      </div>`;
+    }
+    function completionsHint(row) {
+      if (row.completionsNil) return '沒有錄得';
+      if (row.completionsShareBelow) return '佔上年少於 0.05%';
+      if (row.completionsSharePct == null) return '';
+      return '佔上年 ' + row.completionsSharePct + '%';
+    }
+    function renderMarket(key) {
+      const el = document.getElementById('marketStats');
+      if (!el) return;
+      if (marketState === 'loading') {
+        el.innerHTML = '<div class="market"><div class="market-note">載入市場統計…</div></div>';
+        return;
+      }
+      if (marketState !== 'ready' || !marketStats) {
+        el.innerHTML = '<div class="market"><div class="market-note">未能載入市場統計。樓齡資料不受影響。</div></div>';
+        return;
+      }
+      const row = marketStats.areas[key];
+      if (!usableMarketRow(row)) {
+        el.innerHTML = '<div class="market"><div class="market-note">未有此範圍的分區市場統計。</div></div>';
+        return;
+      }
+      const periods = marketStats.periods;
+      const source = marketStats.source || {};
+      const href = safeHttpsUrl(source.datasetUrl);
+      const citation = href
+        ? `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">差餉物業估價署《物業市場統計》</a>`
+        : '差餉物業估價署《物業市場統計》';
+      const sameYear = periods.stockYear === periods.completionsYear && periods.stockYear === periods.vacancyYear;
+      const kicker = sameYear
+        ? '市場統計 · ' + periods.stockYear + '年私人住宅單位'
+        : '市場統計 · 私人住宅單位';
+      const completionsValue = row.completionsNil ? '—' : formatCount(row.completions);
+      const vacancyValue = row.vacancyPct == null ? '—' : String(row.vacancyPct) + '%';
+      const stockHint = sameYear ? '年底' : periods.stockYear + '年年底';
+      const vacantHint = sameYear ? '年底' : periods.vacancyYear + '年年底';
+      const vacancyHint = sameYear ? '佔年底總存量' : '佔' + periods.vacancyYear + '年年底總存量';
+      el.innerHTML = `
+        <section class="market" aria-label="私人住宅市場統計">
+          <div class="market-kicker">${esc(kicker)}</div>
+          <div class="market-grid">
+            ${marketCard('總存量', formatCount(row.stock), stockHint)}
+            ${marketCard('落成量', completionsValue, completionsHint(row))}
+            ${marketCard('空置量', formatCount(row.vacant), vacantHint)}
+            ${marketCard('空置率', vacancyValue, vacancyHint)}
+          </div>
+          <div class="market-note">單位數目，與上方樓宇幢數不同。沒有分區樓價或吸納量。<br>資料來源：${citation}</div>
+        </section>
       `;
     }
     function setLoading(text) {
@@ -536,6 +636,7 @@
       return group;
     }
     function setActiveView(key) {
+      requestedKey = key;
       document.querySelectorAll('.district-btn[data-district]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.district === key);
       });
@@ -638,10 +739,11 @@
       setActiveView(HK_KEY);
       const names = districtNames();
       setLoading('正在繪製全港樓宇…');
-      document.getElementById('districtStats').innerHTML = `
+      document.getElementById('ageStats').innerHTML = `
         <div class="stats-title">全港</div>
         <div>正在整理 18 區樓宇…</div>
       `;
+      renderMarket(HK_KEY);
       collectView(names, token, (ready, total) => {
         if (token !== viewToken) return;
         const text = total
@@ -684,6 +786,25 @@
 
     if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden');
 
+    renderMarket('沙田區');
+    fetch('market-stats.json')
+      .then(r => {
+        if (!r.ok) throw new Error('無法讀取市場統計（HTTP ' + r.status + '）');
+        return r.json();
+      })
+      .then(data => {
+        const parsed = usableMarket(data);
+        if (!parsed) throw new Error('市場統計格式不正確');
+        marketStats = parsed;
+        marketState = 'ready';
+        renderMarket(currentView || requestedKey);
+      })
+      .catch(err => {
+        marketState = 'error';
+        console.error(err);
+        renderMarket(currentView || requestedKey);
+      });
+
     fetch('buildings.json')
       .then(r => {
         if (!r.ok) throw new Error('無法讀取樓宇資料（HTTP ' + r.status + '）');
@@ -708,7 +829,8 @@
       .catch(err => {
         const message = err && err.message ? err.message : '未知錯誤';
         document.getElementById('loading').textContent = '載入失敗：' + message;
-        document.getElementById('districtStats').textContent = '未能載入樓宇資料。';
+        const ageStats = document.getElementById('ageStats');
+        if (ageStats) ageStats.textContent = '未能載入樓宇資料。';
         console.error(err);
       });
   </script>

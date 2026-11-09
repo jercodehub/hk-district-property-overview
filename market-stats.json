@@ -1,0 +1,247 @@
+{
+  "source": {
+    "provider": "差餉物業估價署",
+    "providerEn": "Rating and Valuation Department",
+    "packageId": "hk-rvd-tsinfo_rvd-property-market-statistics",
+    "title": "私人住宅 — 各區總存量、落成量及空置量",
+    "datasetUrl": "https://data.gov.hk/tc-data/dataset/hk-rvd-tsinfo_rvd-property-market-statistics",
+    "csvUrl": "https://www.rvd.gov.hk/datagovhk/Dom_Stock_Completions_and_Vacancy_by_District_Chi.csv",
+    "dictionaryUrl": "https://www.rvd.gov.hk/datagovhk/Data_Dic.pdf",
+    "unit": "私人住宅單位",
+    "boundaryNote": "分區跟隨 2023 年區議會分界。",
+    "nilNote": "來源以「-」表示沒有錄得，這裡記為 0，並以 completionsNil 標示。",
+    "belowNote": "completionsShareBelow 為 true 時，落成量佔上年存量少於 0.05%（來源註釋「+」）。",
+    "stockNote": "最新年底總存量來自最新差餉估價紀錄，不是上年存量加落成量。",
+    "omitted": "此表沒有分區樓價，也沒有分區吸納量。"
+  },
+  "periods": {
+    "priorStockYear": 2023,
+    "stockYear": 2024,
+    "completionsYear": 2024,
+    "vacancyYear": 2024
+  },
+  "areas": {
+    "中西區": {
+      "stockPrior": 96098,
+      "stock": 96066,
+      "completions": 287,
+      "completionsNil": false,
+      "completionsSharePct": 0.3,
+      "completionsShareBelow": false,
+      "vacant": 2352,
+      "vacancyPct": 2.4
+    },
+    "灣仔區": {
+      "stockPrior": 72373,
+      "stock": 72408,
+      "completions": 126,
+      "completionsNil": false,
+      "completionsSharePct": 0.2,
+      "completionsShareBelow": false,
+      "vacant": 2668,
+      "vacancyPct": 3.7
+    },
+    "東區": {
+      "stockPrior": 122902,
+      "stock": 122705,
+      "completions": 156,
+      "completionsNil": false,
+      "completionsSharePct": 0.1,
+      "completionsShareBelow": false,
+      "vacant": 2893,
+      "vacancyPct": 2.4
+    },
+    "南區": {
+      "stockPrior": 44168,
+      "stock": 45259,
+      "completions": 1122,
+      "completionsNil": false,
+      "completionsSharePct": 2.5,
+      "completionsShareBelow": false,
+      "vacant": 2512,
+      "vacancyPct": 5.6
+    },
+    "油尖旺區": {
+      "stockPrior": 113980,
+      "stock": 114983,
+      "completions": 1099,
+      "completionsNil": false,
+      "completionsSharePct": 1,
+      "completionsShareBelow": false,
+      "vacant": 2000,
+      "vacancyPct": 1.7
+    },
+    "深水埗區": {
+      "stockPrior": 83203,
+      "stock": 83813,
+      "completions": 691,
+      "completionsNil": false,
+      "completionsSharePct": 0.8,
+      "completionsShareBelow": false,
+      "vacant": 3660,
+      "vacancyPct": 4.4
+    },
+    "九龍城區": {
+      "stockPrior": 121964,
+      "stock": 129090,
+      "completions": 7895,
+      "completionsNil": false,
+      "completionsSharePct": 6.5,
+      "completionsShareBelow": false,
+      "vacant": 14163,
+      "vacancyPct": 11
+    },
+    "黃大仙區": {
+      "stockPrior": 19069,
+      "stock": 19069,
+      "completions": 0,
+      "completionsNil": true,
+      "completionsSharePct": null,
+      "completionsShareBelow": false,
+      "vacant": 183,
+      "vacancyPct": 1
+    },
+    "觀塘區": {
+      "stockPrior": 51833,
+      "stock": 53042,
+      "completions": 1329,
+      "completionsNil": false,
+      "completionsSharePct": 2.6,
+      "completionsShareBelow": false,
+      "vacant": 2199,
+      "vacancyPct": 4.1
+    },
+    "沙田區": {
+      "stockPrior": 88244,
+      "stock": 88247,
+      "completions": 0,
+      "completionsNil": true,
+      "completionsSharePct": null,
+      "completionsShareBelow": false,
+      "vacant": 1688,
+      "vacancyPct": 1.9
+    },
+    "大埔區": {
+      "stockPrior": 40786,
+      "stock": 42222,
+      "completions": 1430,
+      "completionsNil": false,
+      "completionsSharePct": 3.5,
+      "completionsShareBelow": false,
+      "vacant": 2860,
+      "vacancyPct": 6.8
+    },
+    "北區": {
+      "stockPrior": 30266,
+      "stock": 30192,
+      "completions": 1,
+      "completionsNil": false,
+      "completionsSharePct": null,
+      "completionsShareBelow": true,
+      "vacant": 651,
+      "vacancyPct": 2.2
+    },
+    "元朗區": {
+      "stockPrior": 89524,
+      "stock": 93656,
+      "completions": 4132,
+      "completionsNil": false,
+      "completionsSharePct": 4.6,
+      "completionsShareBelow": false,
+      "vacant": 8490,
+      "vacancyPct": 9.1
+    },
+    "屯門區": {
+      "stockPrior": 71062,
+      "stock": 75112,
+      "completions": 4054,
+      "completionsNil": false,
+      "completionsSharePct": 5.7,
+      "completionsShareBelow": false,
+      "vacant": 4181,
+      "vacancyPct": 5.6
+    },
+    "荃灣區": {
+      "stockPrior": 82479,
+      "stock": 82285,
+      "completions": 0,
+      "completionsNil": true,
+      "completionsSharePct": null,
+      "completionsShareBelow": false,
+      "vacant": 616,
+      "vacancyPct": 0.7
+    },
+    "葵青區": {
+      "stockPrior": 36713,
+      "stock": 36713,
+      "completions": 0,
+      "completionsNil": true,
+      "completionsSharePct": null,
+      "completionsShareBelow": false,
+      "vacant": 265,
+      "vacancyPct": 0.7
+    },
+    "西貢區": {
+      "stockPrior": 78242,
+      "stock": 80154,
+      "completions": 1920,
+      "completionsNil": false,
+      "completionsSharePct": 2.5,
+      "completionsShareBelow": false,
+      "vacant": 3989,
+      "vacancyPct": 5
+    },
+    "離島區": {
+      "stockPrior": 26925,
+      "stock": 26940,
+      "completions": 19,
+      "completionsNil": false,
+      "completionsSharePct": 0.1,
+      "completionsShareBelow": false,
+      "vacant": 2530,
+      "vacancyPct": 9.4
+    },
+    "全港": {
+      "stockPrior": 1269831,
+      "stock": 1291956,
+      "completions": 24261,
+      "completionsNil": false,
+      "completionsSharePct": 1.9,
+      "completionsShareBelow": false,
+      "vacant": 57900,
+      "vacancyPct": 4.5
+    }
+  },
+  "regions": {
+    "港島": {
+      "stockPrior": 335541,
+      "stock": 336438,
+      "completions": 1691,
+      "completionsNil": false,
+      "completionsSharePct": 0.5,
+      "completionsShareBelow": false,
+      "vacant": 10425,
+      "vacancyPct": 3.1
+    },
+    "九龍": {
+      "stockPrior": 390049,
+      "stock": 399997,
+      "completions": 11014,
+      "completionsNil": false,
+      "completionsSharePct": 2.8,
+      "completionsShareBelow": false,
+      "vacant": 22205,
+      "vacancyPct": 5.6
+    },
+    "新界": {
+      "stockPrior": 544241,
+      "stock": 555521,
+      "completions": 11556,
+      "completionsNil": false,
+      "completionsSharePct": 2.1,
+      "completionsShareBelow": false,
+      "vacant": 25270,
+      "vacancyPct": 4.5
+    }
+  }
+}
