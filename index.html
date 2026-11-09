@@ -34,10 +34,27 @@
     }
     .menu-btn {
       background: none; border: none; color: var(--text);
-      font-size: 22px; cursor: pointer; padding: 4px 8px;
+      font-size: 22px; cursor: pointer; padding: 4px 8px; flex: none;
     }
-    .header h1 { font-size: 15px; font-weight: 600; }
-    .header .subtitle { font-size: 11px; color: var(--text-muted); }
+    .header-titles { min-width: 0; flex: 1; }
+    .header h1 {
+      font-size: 15px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .header .subtitle {
+      font-size: 11px; color: var(--text-muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .overview-chip {
+      flex: none; margin-left: auto;
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border); border-radius: 999px;
+      padding: 6px 12px; font-size: 13px; font-weight: 600;
+      cursor: pointer; line-height: 1.2;
+    }
+    .overview-chip:hover, .overview-chip.active {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+    }
     .layout { display: flex; height: calc(100vh - 52px); position: relative; }
     .sidebar {
       width: 260px; background: var(--panel); border-right: 1px solid var(--border);
@@ -53,6 +70,12 @@
       cursor: pointer; font-size: 14px;
     }
     .district-btn:hover, .district-btn.active { background: var(--accent); }
+    .overview-btn {
+      display: flex; justify-content: space-between; align-items: center;
+      font-weight: 600; border: 1px solid var(--border); margin-bottom: 10px;
+    }
+    .overview-btn.active { border-color: var(--accent); }
+    .overview-sub { font-weight: 500; font-size: 11px; opacity: 0.85; }
     .region-label { font-size: 11px; color: var(--text-muted); margin: 14px 0 6px; text-transform: uppercase; }
     .map-container { flex: 1; position: relative; }
     #map { width: 100%; height: 100%; }
@@ -102,6 +125,7 @@
       font-variant-numeric: tabular-nums;
     }
     .age-count.is-wide { font-size: 8px; letter-spacing: -0.04em; }
+    .age-count.is-huge { font-size: 7px; letter-spacing: -0.06em; }
     .legend-key-icon .age-num { font-size: 12px; }
     .legend-key-icon .age-unit, .legend-key-icon .age-count { font-size: 8px; }
     .age-cluster-icon:hover .age-pie { transform: scale(1.06); }
@@ -115,42 +139,48 @@
       .sidebar.hidden { transform: translateX(-100%); }
       .legend { bottom: 70px; left: 8px; font-size: 10px; padding: 8px 10px; }
       .legend-key-icon { width: 40px; height: 40px; }
+      .overview-chip { padding: 6px 10px; }
+      .header { gap: 8px; padding: 0 8px; }
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <button class="menu-btn" id="menuBtn">☰</button>
-    <div>
+    <button class="menu-btn" id="menuBtn" type="button" aria-label="開關地區選單">☰</button>
+    <div class="header-titles">
       <h1>香港地區物業概覽</h1>
       <div class="subtitle">District Property Overview · 全港私樓資料（屋宇署）</div>
     </div>
+    <button class="overview-chip" id="overviewChip" type="button" data-view="hongkong" aria-pressed="false">全港</button>
   </div>
   <div class="layout">
     <div class="sidebar" id="sidebar">
       <div class="district-scroll">
+      <button class="district-btn overview-btn" id="overviewBtn" type="button" data-view="hongkong" aria-pressed="false">
+        <span>全港</span><span class="overview-sub">18 區</span>
+      </button>
       <h2>選擇地區</h2>
       <div class="region-label">香港島</div>
-      <button class="district-btn" data-district="中西區">中西區</button>
-      <button class="district-btn" data-district="灣仔區">灣仔區</button>
-      <button class="district-btn" data-district="東區">東區</button>
-      <button class="district-btn" data-district="南區">南區</button>
+      <button class="district-btn" type="button" data-district="中西區">中西區</button>
+      <button class="district-btn" type="button" data-district="灣仔區">灣仔區</button>
+      <button class="district-btn" type="button" data-district="東區">東區</button>
+      <button class="district-btn" type="button" data-district="南區">南區</button>
       <div class="region-label">九龍</div>
-      <button class="district-btn" data-district="油尖旺區">油尖旺區</button>
-      <button class="district-btn" data-district="深水埗區">深水埗區</button>
-      <button class="district-btn" data-district="九龍城區">九龍城區</button>
-      <button class="district-btn" data-district="黃大仙區">黃大仙區</button>
-      <button class="district-btn" data-district="觀塘區">觀塘區</button>
+      <button class="district-btn" type="button" data-district="油尖旺區">油尖旺區</button>
+      <button class="district-btn" type="button" data-district="深水埗區">深水埗區</button>
+      <button class="district-btn" type="button" data-district="九龍城區">九龍城區</button>
+      <button class="district-btn" type="button" data-district="黃大仙區">黃大仙區</button>
+      <button class="district-btn" type="button" data-district="觀塘區">觀塘區</button>
       <div class="region-label">新界</div>
-      <button class="district-btn active" data-district="沙田區">沙田區</button>
-      <button class="district-btn" data-district="大埔區">大埔區</button>
-      <button class="district-btn" data-district="北區">北區</button>
-      <button class="district-btn" data-district="元朗區">元朗區</button>
-      <button class="district-btn" data-district="屯門區">屯門區</button>
-      <button class="district-btn" data-district="荃灣區">荃灣區</button>
-      <button class="district-btn" data-district="葵青區">葵青區</button>
-      <button class="district-btn" data-district="西貢區">西貢區</button>
-      <button class="district-btn" data-district="離島區">離島區</button>
+      <button class="district-btn active" type="button" data-district="沙田區">沙田區</button>
+      <button class="district-btn" type="button" data-district="大埔區">大埔區</button>
+      <button class="district-btn" type="button" data-district="北區">北區</button>
+      <button class="district-btn" type="button" data-district="元朗區">元朗區</button>
+      <button class="district-btn" type="button" data-district="屯門區">屯門區</button>
+      <button class="district-btn" type="button" data-district="荃灣區">荃灣區</button>
+      <button class="district-btn" type="button" data-district="葵青區">葵青區</button>
+      <button class="district-btn" type="button" data-district="西貢區">西貢區</button>
+      <button class="district-btn" type="button" data-district="離島區">離島區</button>
       </div>
       <div class="stats" id="districtStats">載入數據中…</div>
     </div>
@@ -201,7 +231,13 @@
       "離島區": { center: [22.26, 113.95], zoom: 12 }
     };
 
-    const map = L.map('map', { zoomControl: true }).setView([22.38, 114.19], 13);
+    const HK_KEY = '全港';
+    // Padded around the building coordinates (about 22.19–22.55 N, 113.85–114.43 E)
+    // so fitBounds shows the whole territory, including outlying islands.
+    const HK_BOUNDS = L.latLngBounds([22.17, 113.82], [22.57, 114.46]);
+    const THIS_YEAR = new Date().getFullYear();
+
+    const map = L.map('map', { zoomControl: true, preferCanvas: true }).setView([22.38, 114.19], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
       maxZoom: 19
@@ -209,6 +245,14 @@
 
     let allData = {};
     let clusterGroup = null;
+    let currentView = null;
+    let pendingView = null;
+    let viewToken = 0;
+    let clusterBusy = false;
+    let queuedKey = null;
+    const buildingLists = Object.create(null);
+    const markerLists = Object.create(null);
+    const markerWaiters = Object.create(null);
 
     const AGE_BANDS = [
       { key: 'young', color: '#10b981', label: '20年以下' },
@@ -236,7 +280,7 @@
     }
     function getAge(year) {
       if (!Number.isFinite(year)) return null;
-      return new Date().getFullYear() - year;
+      return THIS_YEAR - year;
     }
     function bandKey(age) {
       if (age < 20) return 'young';
@@ -284,14 +328,20 @@
       }
       return `conic-gradient(${stops.join(',')})`;
     }
+    // City zoom (about 10–12, where fitBounds lands) uses a tighter radius so
+    // the territory stays a field of age-mix rings. District zooms keep the
+    // previous radii.
     function clusterRadiusForZoom(zoom) {
-      if (zoom <= 12) return 72;
+      if (zoom <= 10) return 42;
+      if (zoom === 11) return 52;
+      if (zoom === 12) return 60;
       if (zoom === 13) return 62;
       if (zoom === 14) return 56;
       if (zoom === 15) return 58;
       return 46;
     }
     function clusterIconSize(zoom) {
+      if (zoom <= 11) return 40;
       if (zoom >= 16) return 40;
       if (zoom >= 15) return 44;
       return 50;
@@ -313,7 +363,7 @@
       const html = `<div class="age-pie" style="background:${conicGradient(summary.counts, summary.total)}" role="img" aria-label="${esc(label)}">
           <div class="age-pie-hole">
             <div class="age-avg" style="color:${avgColor}">${avgHtml}</div>
-            <div class="age-count${count >= 1000 ? ' is-wide' : ''}">${count}</div>
+            <div class="age-count${count >= 10000 ? ' is-huge' : count >= 1000 ? ' is-wide' : ''}">${count}</div>
           </div>
         </div>`;
       return L.divIcon({
@@ -323,7 +373,10 @@
         iconAnchor: [size / 2, size / 2]
       });
     }
-    function renderDistrictStats(district, buildings) {
+    function formatCount(n) {
+      return Number(n).toLocaleString('zh-HK');
+    }
+    function renderStats(title, buildings, detail) {
       const summary = summarizeAges(buildings.map(b => getAge(b.year)));
       const rows = AGE_BANDS.map(band => {
         const n = summary.counts[band.key];
@@ -332,73 +385,301 @@
           <span class="dot" style="background:${band.color}"></span>
           <span class="band-label">${band.label}</span>
           <span class="band-bar"><span style="width:${pct.toFixed(1)}%;background:${band.color}"></span></span>
-          <span class="band-n">${n.toLocaleString('zh-HK')}</span>
+          <span class="band-n">${formatCount(n)}</span>
         </div>`;
       }).join('');
       document.getElementById('districtStats').innerHTML = `
-        <div class="stats-title">${esc(district)}</div>
-        <div>樓宇數量：${buildings.length.toLocaleString('zh-HK')}</div>
+        <div class="stats-title">${esc(title)}</div>
+        ${detail ? `<div>${esc(detail)}</div>` : ''}
+        <div>樓宇數量：${formatCount(buildings.length)}</div>
         <div>平均樓齡：${summary.avg == null ? '—' : summary.avg + ' 年'}</div>
         <div class="band-heading">樓齡分布</div>
         ${rows}
         <div class="stats-source">數據來源：屋宇署樓宇資料及樓齡紀錄</div>
       `;
     }
-
-    function loadDistrict(district) {
-      if (clusterGroup) map.removeLayer(clusterGroup);
-      const view = districts[district];
-      if (view) map.setView(view.center, view.zoom);
-
-      clusterGroup = L.markerClusterGroup({
+    function setLoading(text) {
+      const el = document.getElementById('loading');
+      if (!text) {
+        el.style.display = 'none';
+        return;
+      }
+      el.style.display = '';
+      el.textContent = text;
+    }
+    function districtNames() {
+      const names = Object.keys(districts);
+      const seen = new Set(names);
+      Object.keys(allData).forEach(key => {
+        if (!seen.has(key) && Array.isArray(allData[key])) {
+          names.push(key);
+          seen.add(key);
+        }
+      });
+      return names;
+    }
+    function buildingList(district) {
+      if (!buildingLists[district]) {
+        buildingLists[district] = (Array.isArray(allData[district]) ? allData[district] : [])
+          .map(usableBuilding)
+          .filter(Boolean);
+      }
+      return buildingLists[district];
+    }
+    function markerFor(b) {
+      const age = getAge(b.year);
+      const marker = L.circleMarker([b.lat, b.lng], {
+        radius: 6,
+        fillColor: getAgeColor(b.year),
+        color: '#fff',
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.85,
+        year: b.year
+      });
+      marker.bindPopup(`
+        <b>${esc(b.addr || '樓宇')}</b><br>
+        類型：${esc(b.type || '—')}<br>
+        佔用許可年份：${esc(b.year)}<br>
+        估算樓齡：${age == null ? '—' : esc(age)} 年
+      `);
+      return marker;
+    }
+    function appendAll(target, source) {
+      for (let i = 0; i < source.length; i++) target.push(source[i]);
+    }
+    function ensureMarkers(district, done) {
+      const cached = markerLists[district];
+      // A list still being clustered belongs to that group. Build a fresh copy
+      // so a newer view cannot fight the in-flight chunked load for __parent.
+      if (cached && !cached.inUseOwner) {
+        done(cached);
+        return;
+      }
+      if (markerWaiters[district]) {
+        markerWaiters[district].push(done);
+        return;
+      }
+      markerWaiters[district] = [done];
+      const buildings = buildingList(district);
+      const markers = new Array(buildings.length);
+      let i = 0;
+      const CHUNK = 2500;
+      function step() {
+        const end = Math.min(i + CHUNK, buildings.length);
+        for (; i < end; i++) markers[i] = markerFor(buildings[i]);
+        if (i < buildings.length) {
+          setTimeout(step, 0);
+          return;
+        }
+        markerLists[district] = markers;
+        const waiters = markerWaiters[district] || [];
+        delete markerWaiters[district];
+        waiters.forEach(fn => fn(markers));
+      }
+      step();
+    }
+    function collectView(names, token, onProgress, done) {
+      const buildings = [];
+      const markers = [];
+      let index = 0;
+      let ready = 0;
+      const total = names.reduce((sum, name) => sum + buildingList(name).length, 0);
+      onProgress(0, total);
+      function next() {
+        if (token !== viewToken) return;
+        if (index >= names.length) {
+          done(buildings, markers, total);
+          return;
+        }
+        const name = names[index++];
+        ensureMarkers(name, (districtMarkers) => {
+          if (token !== viewToken) return;
+          appendAll(buildings, buildingList(name));
+          appendAll(markers, districtMarkers);
+          ready += districtMarkers.length;
+          onProgress(ready, total);
+          setTimeout(next, 0);
+        });
+      }
+      next();
+    }
+    function makeClusterGroup(ownedLists, token, large) {
+      let released = false;
+      const group = L.markerClusterGroup({
         chunkedLoading: true,
+        chunkInterval: 120,
+        chunkDelay: 16,
         maxClusterRadius: clusterRadiusForZoom,
         disableClusteringAtZoom: 17,
         spiderfyOnMaxZoom: true,
         showCoverageOnHover: false,
         zoomToBoundsOnClick: true,
         iconCreateFunction: createAgeClusterIcon,
-        spiderLegPolylineOptions: { weight: 1.5, color: '#334155', opacity: 0.75 }
+        spiderLegPolylineOptions: { weight: 1.5, color: '#334155', opacity: 0.75 },
+        chunkProgress: (processed, total) => {
+          if (large && token === viewToken && processed < total) {
+            setLoading('正在聚合樓宇… ' + formatCount(processed) + '／' + formatCount(total));
+          }
+          if (released || processed < total) return;
+          released = true;
+          ownedLists.forEach(list => {
+            if (list.inUseOwner === group) list.inUseOwner = null;
+          });
+          clusterBusy = false;
+          if (token === viewToken) setLoading('');
+          // Let the caller finish mounting before a queued district/全港 switch.
+          setTimeout(flushQueue, 0);
+        }
       });
-
-      const buildings = (Array.isArray(allData[district]) ? allData[district] : [])
-        .map(usableBuilding)
-        .filter(Boolean);
-      const markers = buildings.map(b => {
-        const age = getAge(b.year);
-        const marker = L.circleMarker([b.lat, b.lng], {
-          radius: 6,
-          fillColor: getAgeColor(b.year),
-          color: '#fff',
-          weight: 1,
-          opacity: 1,
-          fillOpacity: 0.85,
-          year: b.year
-        });
-        marker.bindPopup(`
-          <b>${esc(b.addr || '樓宇')}</b><br>
-          類型：${esc(b.type || '—')}<br>
-          佔用許可年份：${esc(b.year)}<br>
-          估算樓齡：${age == null ? '—' : esc(age)} 年
-        `);
-        return marker;
+      ownedLists.forEach(list => { list.inUseOwner = group; });
+      return group;
+    }
+    function setActiveView(key) {
+      document.querySelectorAll('.district-btn[data-district]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.district === key);
       });
-      clusterGroup.addLayers(markers);
-      map.addLayer(clusterGroup);
-      renderDistrictStats(district, buildings);
-
-      document.querySelectorAll('.district-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.district === district);
+      const overviewOn = key === HK_KEY;
+      document.querySelectorAll('[data-view="hongkong"]').forEach(btn => {
+        btn.classList.toggle('active', overviewOn);
+        btn.setAttribute('aria-pressed', overviewOn ? 'true' : 'false');
       });
+    }
+    function closeSidebarOnMobile() {
       if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden');
     }
+    function frameMap(key) {
+      closeSidebarOnMobile();
+      const apply = () => {
+        map.invalidateSize({ animate: false, pan: false });
+        // Set the destination zoom before markers are clustered, and don't
+        // animate: a zoom animation while chunkedLoading is running leaves
+        // the rings at the previous zoom.
+        if (key === HK_KEY) {
+          map.fitBounds(HK_BOUNDS, { padding: [24, 24], animate: false });
+          return;
+        }
+        const view = districts[key];
+        if (view) map.setView(view.center, view.zoom, { animate: false });
+      };
+      if (!map.getSize().x) requestAnimationFrame(apply);
+      else apply();
+    }
+    function flushQueue() {
+      const next = queuedKey;
+      queuedKey = null;
+      if (!next || clusterBusy) return;
+      if (next === currentView && clusterGroup) {
+        setActiveView(next);
+        frameMap(next);
+        return;
+      }
+      if (next === HK_KEY) loadHongKong();
+      else loadDistrict(next);
+    }
+    function showBuildings(key, buildings, markers, detail, sourceNames, token) {
+      if (token !== viewToken) return;
+      const owned = [];
+      sourceNames.forEach(name => {
+        const list = markerLists[name];
+        if (list && owned.indexOf(list) === -1) owned.push(list);
+      });
+      const large = markers.length > 4000;
+      if (clusterGroup) {
+        clusterGroup.clearLayers();
+        map.removeLayer(clusterGroup);
+        clusterGroup = null;
+      }
+      clusterGroup = makeClusterGroup(owned, token, large);
+      currentView = key;
+      pendingView = null;
+      frameMap(key);
+      clusterBusy = true;
+      clusterGroup.addLayers(markers);
+      map.addLayer(clusterGroup);
+      renderStats(key, buildings, detail);
+      setActiveView(key);
+      if (!large && !clusterBusy) setLoading('');
+    }
+    function loadDistrict(district) {
+      const known = Object.prototype.hasOwnProperty.call(districts, district);
+      const inData = Array.isArray(allData[district]);
+      if (!district || (!known && !inData)) return;
+      if (currentView === district && clusterGroup && pendingView !== district) {
+        setActiveView(district);
+        frameMap(district);
+        return;
+      }
+      const token = ++viewToken;
+      pendingView = district;
+      currentView = null;
+      setActiveView(district);
+      const rows = buildingList(district);
+      if (rows.length > 4000) setLoading('正在繪製' + district + '…');
+      ensureMarkers(district, (markers) => {
+        if (token !== viewToken) return;
+        showBuildings(district, rows, markers, '', [district], token);
+      });
+    }
+    function loadHongKong() {
+      if (pendingView === HK_KEY) {
+        setActiveView(HK_KEY);
+        closeSidebarOnMobile();
+        return;
+      }
+      if (currentView === HK_KEY && clusterGroup) {
+        setActiveView(HK_KEY);
+        frameMap(HK_KEY);
+        return;
+      }
+      const token = ++viewToken;
+      pendingView = HK_KEY;
+      currentView = null;
+      setActiveView(HK_KEY);
+      const names = districtNames();
+      setLoading('正在繪製全港樓宇…');
+      document.getElementById('districtStats').innerHTML = `
+        <div class="stats-title">全港</div>
+        <div>正在整理 18 區樓宇…</div>
+      `;
+      collectView(names, token, (ready, total) => {
+        if (token !== viewToken) return;
+        const text = total
+          ? '正在繪製全港樓宇… ' + formatCount(ready) + '／' + formatCount(total)
+          : '正在繪製全港樓宇…';
+        setLoading(text);
+      }, (buildings, markers) => {
+        if (token !== viewToken) return;
+        const detail = '一次顯示 ' + names.length + ' 區';
+        showBuildings(HK_KEY, buildings, markers, detail, names, token);
+      });
+    }
 
-    document.querySelectorAll('.district-btn').forEach(btn => {
-      btn.addEventListener('click', () => loadDistrict(btn.dataset.district));
+    document.querySelectorAll('.district-btn[data-district]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (clusterBusy) {
+          queuedKey = btn.dataset.district;
+          setActiveView(queuedKey);
+          return;
+        }
+        loadDistrict(btn.dataset.district);
+      });
+    });
+    document.querySelectorAll('[data-view="hongkong"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (clusterBusy) {
+          queuedKey = HK_KEY;
+          setActiveView(HK_KEY);
+          closeSidebarOnMobile();
+          return;
+        }
+        loadHongKong();
+      });
     });
 
     document.getElementById('menuBtn').addEventListener('click', () => {
       document.getElementById('sidebar').classList.toggle('hidden');
+      setTimeout(() => map.invalidateSize(), 280);
     });
 
     if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden');
@@ -422,9 +703,7 @@
       })
       .then(data => {
         allData = data;
-        document.getElementById('loading').style.display = 'none';
         loadDistrict('沙田區');
-        setTimeout(() => map.invalidateSize(), 100);
       })
       .catch(err => {
         const message = err && err.message ? err.message : '未知錯誤';
